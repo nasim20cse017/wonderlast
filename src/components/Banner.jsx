@@ -1,6 +1,7 @@
 'use client';
 
 import { Separator } from "@heroui/react";
+import Link from "next/link";
 
 import {
   FiMapPin,
@@ -60,9 +61,9 @@ const Banner = () => {
                 Explore Now
               </button>
 
-              <button className="rounded-2xl border border-white/20 bg-white/10 px-8 py-4 text-sm font-semibold uppercase tracking-wide text-white backdrop-blur-md transition-all duration-300 hover:bg-white hover:text-gray-900">
+             <Link href="/destinations"> <button className="rounded-2xl border border-white/20 bg-white/10 px-8 py-4 text-sm font-semibold uppercase tracking-wide text-white backdrop-blur-md transition-all duration-300 hover:bg-white hover:text-gray-900">
                 View Destinations
-              </button>
+              </button></Link>
             </div>
           </div>
 
