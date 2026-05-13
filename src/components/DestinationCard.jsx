@@ -1,4 +1,5 @@
 // src/components/DestinationCard.jsx
+'use client';
 
 import { Button } from "@heroui/react";
 import { FiExternalLink } from "react-icons/fi";

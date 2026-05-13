@@ -2,8 +2,10 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
+
+import { authClient } from "@/lib/auth-client";
 
 import {
   FiHome,
@@ -15,12 +17,23 @@ import {
   FiUserPlus,
   FiMenu,
   FiX,
+  FiLogOut,
 } from "react-icons/fi";
 
+import { toast } from "react-toastify";
+
 const Navbar = () => {
+  const { data: session } = authClient.useSession();
+
+  const user = session?.user;
+
   const pathname = usePathname();
+
+  const router = useRouter();
+
   const [menuOpen, setMenuOpen] = useState(false);
 
+  // Navigation Links
   const navLinks = [
     {
       name: "Home",
@@ -34,7 +47,7 @@ const Navbar = () => {
     },
     {
       name: "Bookings",
-      path: "/bookings",
+      path: "/my-bookings",
       icon: <FiBookOpen size={18} />,
     },
     {
@@ -44,46 +57,53 @@ const Navbar = () => {
     },
   ];
 
-  const authLinks = [
-    {
-      name: "Profile",
-      path: "/profile",
-      icon: <FiUser size={18} />,
-    },
-    {
-      name: "Login",
-      path: "/login",
-      icon: <FiLogIn size={18} />,
-    },
-    {
-      name: "Sign Up",
-      path: "/signup",
-      icon: <FiUserPlus size={18} />,
-    },
-  ];
-
+  // Active Link Style
   const linkStyle = (path) =>
     pathname === path
-      ? "bg-cyan-500 text-white shadow-md"
+      ? "bg-cyan-500 text-white shadow-lg shadow-cyan-500/20"
       : "text-gray-700 hover:bg-cyan-50 hover:text-cyan-600";
 
+  // Logout
+  const handleLogout = async () => {
+    try {
+      await authClient.signOut();
+
+      toast.success("Logout successful 👋", {
+        position: "top-right",
+        autoClose: 2500,
+        theme: "colored",
+      });
+
+      router.push("/login");
+      router.refresh();
+    } catch (error) {
+      console.error(error);
+
+      toast.error("Logout failed!", {
+        position: "top-right",
+        autoClose: 2500,
+        theme: "colored",
+      });
+    }
+  };
+
   return (
-    <header className="sticky top-0 z-50 border-b border-gray-200 bg-white/80 backdrop-blur-xl">
+    <header className="sticky top-0 z-50 border-b border-white/20 bg-white/80 backdrop-blur-xl">
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
         {/* Logo */}
         <Link href="/" className="flex-shrink-0">
           <Image
             src="/assets/Wanderlast.png"
-            width={150}
-            height={150}
-            alt="Logo"
-            className="h-auto w-[120px] md:w-[140px]"
+            width={160}
+            height={160}
+            alt="Wanderlust Logo"
+            className="h-auto w-[120px] md:w-[150px]"
           />
         </Link>
 
-        {/* Desktop Nav */}
-        <div className="hidden xl:flex items-center gap-3">
-          {/* Navigation Links */}
+        {/* Desktop Menu */}
+        <div className="hidden xl:flex items-center gap-4">
+          {/* Main Nav */}
           <ul className="flex items-center gap-2">
             {navLinks.map((link) => (
               <li key={link.path}>
@@ -100,26 +120,81 @@ const Navbar = () => {
             ))}
           </ul>
 
-          {/* Auth Links */}
-          <div className="ml-4 flex items-center gap-2 border-l border-gray-200 pl-4">
-            {authLinks.map((link) => (
+          {/* Divider */}
+          <div className="h-8 w-px bg-gray-200"></div>
+
+          {/* Auth Section */}
+          {user ? (
+            <div className="flex items-center gap-3">
+              {/* User Info */}
               <Link
-                key={link.path}
-                href={link.path}
+                href="/profile"
+                className="flex items-center gap-3 rounded-2xl border border-gray-200 bg-white px-3 py-2 transition-all duration-300 hover:border-cyan-200 hover:bg-cyan-50"
+              >
+                {/* User Image */}
+                {user.image ? (
+                  <Image referrerPolicy="no-referrer"
+                    src={user.image}
+                    alt={user.name}
+                    width={40}
+                    height={40}
+                    className="h-10 w-10 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-cyan-500 text-sm font-bold uppercase text-white">
+                    {user?.name?.charAt(0)}
+                  </div>
+                )}
+
+                {/* Name */}
+                <div className="hidden 2xl:block">
+                  <h3 className="text-sm font-semibold text-gray-800">
+                    {user.name}
+                  </h3>
+
+                  <p className="text-xs text-gray-500">
+                    View Profile
+                  </p>
+                </div>
+              </Link>
+
+              {/* Logout */}
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2 rounded-2xl bg-red-50 px-4 py-2 text-sm font-medium text-red-500 transition-all duration-300 hover:bg-red-500 hover:text-white"
+              >
+                <FiLogOut size={18} />
+                Logout
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              {/* Login */}
+              <Link
+                href="/login"
                 className={`flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-medium transition-all duration-300 ${linkStyle(
-                  link.path
+                  "/login"
                 )}`}
               >
-                {link.icon}
-                {link.name}
+                <FiLogIn size={18} />
+                Login
               </Link>
-            ))}
-          </div>
+
+              {/* Signup */}
+              <Link
+                href="/signup"
+                className="flex items-center gap-2 rounded-2xl bg-cyan-500 px-4 py-2 text-sm font-medium text-white shadow-lg shadow-cyan-500/20 transition-all duration-300 hover:bg-cyan-600"
+              >
+                <FiUserPlus size={18} />
+                Sign Up
+              </Link>
+            </div>
+          )}
         </div>
 
-        {/* Tablet Nav */}
+        {/* Tablet Actions */}
         <div className="hidden md:flex xl:hidden items-center gap-2">
-          {/* Quick Links */}
+          {/* Quick Nav */}
           <Link
             href="/destinations"
             className={`rounded-xl p-3 transition-all duration-300 ${linkStyle(
@@ -138,14 +213,36 @@ const Navbar = () => {
             <FiBookOpen size={20} />
           </Link>
 
-          <Link
-            href="/profile"
-            className={`rounded-xl p-3 transition-all duration-300 ${linkStyle(
-              "/profile"
-            )}`}
-          >
-            <FiUser size={20} />
-          </Link>
+          {/* User/Profile */}
+          {user ? (
+            <Link
+              href="/profile"
+              className="overflow-hidden rounded-full border border-gray-200"
+            >
+              {user.image ? (
+                <Image
+                  src={user.image}
+                  alt={user.name}
+                  width={42}
+                  height={42}
+                  className="h-11 w-11 object-cover"
+                />
+              ) : (
+                <div className="flex h-11 w-11 items-center justify-center bg-cyan-500 text-sm font-bold uppercase text-white">
+                  {user?.name?.charAt(0)}
+                </div>
+              )}
+            </Link>
+          ) : (
+            <Link
+              href="/login"
+              className={`rounded-xl p-3 transition-all duration-300 ${linkStyle(
+                "/login"
+              )}`}
+            >
+              <FiLogIn size={20} />
+            </Link>
+          )}
 
           {/* Menu Button */}
           <button
@@ -172,6 +269,35 @@ const Navbar = () => {
         }`}
       >
         <div className="space-y-6 border-t border-gray-100 bg-white px-4 py-5 md:px-6">
+          {/* User Section */}
+          {user && (
+            <div className="flex items-center gap-4 rounded-3xl bg-cyan-50 p-4">
+              {user.image ? (
+                <Image
+                  src={user.image}
+                  alt={user.name}
+                  width={55}
+                  height={55}
+                  className="h-14 w-14 rounded-full object-cover"
+                />
+              ) : (
+                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-cyan-500 text-lg font-bold uppercase text-white">
+                  {user?.name?.charAt(0)}
+                </div>
+              )}
+
+              <div>
+                <h3 className="font-semibold text-gray-800">
+                  {user.name}
+                </h3>
+
+                <p className="text-sm text-gray-500">
+                  {user.email}
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Main Nav */}
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
             {navLinks.map((link) => (
@@ -192,22 +318,51 @@ const Navbar = () => {
           {/* Divider */}
           <div className="border-t border-gray-100"></div>
 
-          {/* Auth Nav */}
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-            {authLinks.map((link) => (
+          {/* Auth Section */}
+          {user ? (
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
               <Link
-                key={link.path}
-                href={link.path}
+                href="/profile"
                 onClick={() => setMenuOpen(false)}
-                className={`flex items-center md:justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-medium transition-all duration-300 ${linkStyle(
-                  link.path
+                className={`flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition-all duration-300 ${linkStyle(
+                  "/profile"
                 )}`}
               >
-                {link.icon}
-                {link.name}
+                <FiUser size={18} />
+                Profile
               </Link>
-            ))}
-          </div>
+
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-3 rounded-2xl bg-red-50 px-4 py-3 text-sm font-medium text-red-500 transition-all duration-300 hover:bg-red-500 hover:text-white"
+              >
+                <FiLogOut size={18} />
+                Logout
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              <Link
+                href="/login"
+                onClick={() => setMenuOpen(false)}
+                className={`flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition-all duration-300 ${linkStyle(
+                  "/login"
+                )}`}
+              >
+                <FiLogIn size={18} />
+                Login
+              </Link>
+
+              <Link
+                href="/signup"
+                onClick={() => setMenuOpen(false)}
+                className="flex items-center gap-3 rounded-2xl bg-cyan-500 px-4 py-3 text-sm font-medium text-white transition-all duration-300 hover:bg-cyan-600"
+              >
+                <FiUserPlus size={18} />
+                Sign Up
+              </Link>
+            </div>
+          )}
         </div>
       </div>
     </header>

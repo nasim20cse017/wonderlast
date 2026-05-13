@@ -1,5 +1,6 @@
 // src/app/destinations/page.jsx
 
+
 import DestinationCard from "@/components/DestinationCard";
 
 const DestinationPage = async () => {
